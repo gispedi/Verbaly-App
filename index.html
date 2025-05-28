@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verbaly - Registrazione Assemblea</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #toolbar button {
+      padding: 5px;
+      margin: 2px;
+    }
+    #transcript {
+      margin-top: 10px;
+      padding: 20px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      min-height: 200px;
+      white-space: pre-wrap;
+    }
+    .button-container {
+      margin-top: 20px;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: #888;
+    }
+    .recording {
+      background-color: #ffcccc;
+    }
+    .log-block {
+      margin-bottom: 10px;
+    }
+    .timestamp {
+      color: #555;
+      font-size: 12px;
+      font-style: italic;
+    }
+    #historyList {
+      margin-top: 20px;
+    }
+    .history-entry {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #privacyBlock {
+      margin-top: 20px;
+      padding: 10px;
+      background: #eef;
+      border: 1px dashed #88f;
+    }
+    #loginForm {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    #loginForm input {
+      font-size: 18px;
+      margin: 5px;
+      padding: 10px;
+    }
+    #logoutBtn {
+      margin-left: 20px;
+      background: #eee;
+    }
+    @media (max-width: 600px) {
+      button {
+        width: 100%;
+        margin: 5px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loginForm">
+    <h2>Accesso a Verbaly</h2>
+    <input type="text" id="username" placeholder="Nome utente">
+    <input type="password" id="pin" placeholder="PIN">
+    <button onclick="login()">Entra</button>
+  </div>
+
+  <div id="mainApp" style="display:none">
+    <h1>Verbaly - Registrazione Assemblea <span style="font-size:14px" id="userLabel"></span> <button id="logoutBtn" onclick="logout()">Logout</button></h1>
+    <p>Premi il pulsante per iniziare la registrazione vocale. Il testo verrà trascritto in tempo reale.</p>
+
+    <div class="button-container">
+      <button id="startBtn" onclick="startRecording()">Inizia Assemblea</button>
+      <button id="stopBtn" onclick="stopRecording()" disabled>Ferma Registrazione</button>
+      <button onclick="saveSession()">Salva Assemblea</button>
+      <button onclick="downloadTranscript()">Scarica Verbale (Word)</button>
+    </div>
+
+    <h2>Editor Verbale:</h2>
+    <div id="toolbar">
+      <button onclick="execCmd('bold')">Grassetto</button>
+      <button onclick="execCmd('italic')">Corsivo</button>
+      <button onclick="execCmd('underline')">Sottolineato</button>
+      <button onclick="execCmd('insertUnorderedList')">• Lista</button>
+      <button onclick="execCmd('insertOrderedList')">1. Lista</button>
+    </div>
+    <div id="transcript" contenteditable="true">Qui apparirà la trascrizione...</div>
+
+    <div id="privacyBlock" contenteditable="true">
+      <h3>Informativa Privacy</h3>
+      <p>Ai sensi del Regolamento UE 2016/679 (GDPR), i partecipanti sono informati che l’assemblea è registrata al solo fine della redazione del verbale. I dati non saranno diffusi e saranno trattati esclusivamente ai fini condominiali.</p>
+      <p>Il presente verbale conterrà trascrizioni fedeli delle dichiarazioni rilasciate nel corso dell’assemblea e potrà essere conservato per scopi legittimi e conformi alla normativa vigente.</p>
+    </div>
+
+    <h2>📂 Storico Assemblee Salvate:</h2>
+    <div id="historyList"></div>
+
+    <footer>
+      Verbaly - Versione demo locale | Funziona solo su Chrome e Edge
+    </footer>
+  </div>
+
+<script>
+function login() {
+  const username = document.getElementById("username").value;
+  const pin = document.getElementById("pin").value;
+  if (username && pin) {
+    document.getElementById("loginForm").style.display = "none";
+    document.getElementById("mainApp").style.display = "block";
+    document.getElementById("userLabel").innerText = `- Utente: ${username}`;
+  } else {
+    alert("Inserisci nome utente e PIN");
+  }
+}
+function logout() {
+  document.getElementById("loginForm").style.display = "flex";
+  document.getElementById("mainApp").style.display = "none";
+  document.getElementById("username").value = "";
+  document.getElementById("pin").value = "";
+}
+function execCmd(command) {
+  document.execCommand(command, false, null);
+}
+function startRecording() { alert("Simulazione avvio registrazione"); document.getElementById("startBtn").disabled = true; document.getElementById("stopBtn").disabled = false; }
+function stopRecording() { alert("Simulazione fine registrazione"); document.getElementById("startBtn").disabled = false; document.getElementById("stopBtn").disabled = true; }
+function saveSession() {
+  const content = document.getElementById("transcript").innerText;
+  const history = JSON.parse(localStorage.getItem("verbalyHistory") || "[]");
+  history.unshift({ date: new Date().toLocaleString(), content });
+  localStorage.setItem("verbalyHistory", JSON.stringify(history));
+  displayHistory();
+}
+function downloadTranscript() {
+  const text = document.getElementById("transcript").innerText;
+  const blob = new Blob([text], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Verbale_Assemblea.doc";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function displayHistory() {
+  const history = JSON.parse(localStorage.getItem("verbalyHistory") || "[]");
+  const container = document.getElementById("historyList");
+  container.innerHTML = "";
+  history.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "history-entry";
+    div.innerHTML = `<div class='timestamp'>${entry.date}</div><div>${entry.content}</div>`;
+    container.appendChild(div);
+  });
+}
+displayHistory();
+</script>
+</body>
+</html>
